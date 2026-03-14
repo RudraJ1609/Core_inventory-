@@ -3,10 +3,11 @@ import { db } from "@workspace/db";
 import { stockHistory } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { ListHistoryQueryParams } from "@workspace/api-zod";
+import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-router.get("/history", async (req, res) => {
+router.get("/history", requireAuth, async (req, res) => {
   const query = ListHistoryQueryParams.parse(req.query);
   let events;
   if (query.itemId) {

@@ -5,7 +5,10 @@
  * Inventory Management System API
  * OpenAPI spec version: 0.1.0
  */
+import type { AuthUserRole } from "./authUserRole";
 
-export type ListItemsParams = {
-  search?: string;
-};
+export interface AuthUser {
+  id: number;
+  username: string;
+  role: AuthUserRole;
+}

@@ -6,13 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./authUser";
+export * from "./authUserRole";
 export * from "./createItemBody";
 export * from "./dashboardStats";
 export * from "./deleteResult";
+export * from "./errorResponse";
 export * from "./healthStatus";
 export * from "./historyEvent";
 export * from "./historyEventAction";
 export * from "./inventoryItem";
 export * from "./listHistoryParams";
 export * from "./listItemsParams";
+export * from "./loginBody";
+export * from "./successResult";
 export * from "./updateItemBody";

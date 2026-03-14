@@ -1,11 +1,11 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { inventoryItems } from "@workspace/db/schema";
-import { lte, sql } from "drizzle-orm";
+import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-router.get("/dashboard", async (_req, res) => {
+router.get("/dashboard", requireAuth, async (_req, res) => {
   const items = await db.select().from(inventoryItems);
   const totalItems = items.length;
   const totalStockValue = items.reduce(

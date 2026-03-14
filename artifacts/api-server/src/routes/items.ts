@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { inventoryItems, stockHistory } from "@workspace/db/schema";
-import { eq, ilike, or, sql } from "drizzle-orm";
+import { eq, ilike, or } from "drizzle-orm";
 import {
   CreateItemBody,
   UpdateItemBody,
@@ -10,10 +10,11 @@ import {
   UpdateItemParams,
   DeleteItemParams,
 } from "@workspace/api-zod";
+import { requireAuth, requireManager } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-router.get("/items", async (req, res) => {
+router.get("/items", requireAuth, async (req, res) => {
   const query = ListItemsQueryParams.parse(req.query);
   let items;
   if (query.search) {
@@ -39,7 +40,7 @@ router.get("/items", async (req, res) => {
   res.json(formatted);
 });
 
-router.post("/items", async (req, res) => {
+router.post("/items", requireManager, async (req, res) => {
   const body = CreateItemBody.parse(req.body);
   const [item] = await db
     .insert(inventoryItems)
@@ -63,7 +64,7 @@ router.post("/items", async (req, res) => {
   });
 });
 
-router.get("/items/:id", async (req, res) => {
+router.get("/items/:id", requireAuth, async (req, res) => {
   const params = GetItemParams.parse({ id: Number(req.params.id) });
   const [item] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, params.id));
   if (!item) {
@@ -78,7 +79,7 @@ router.get("/items/:id", async (req, res) => {
   });
 });
 
-router.put("/items/:id", async (req, res) => {
+router.put("/items/:id", requireManager, async (req, res) => {
   const params = UpdateItemParams.parse({ id: Number(req.params.id) });
   const body = UpdateItemBody.parse(req.body);
   const [existing] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, params.id));
@@ -130,7 +131,7 @@ router.put("/items/:id", async (req, res) => {
   });
 });
 
-router.delete("/items/:id", async (req, res) => {
+router.delete("/items/:id", requireManager, async (req, res) => {
   const params = DeleteItemParams.parse({ id: Number(req.params.id) });
   const [existing] = await db.select().from(inventoryItems).where(eq(inventoryItems.id, params.id));
   if (!existing) {

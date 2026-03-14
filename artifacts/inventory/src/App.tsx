@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,27 +6,55 @@ import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import History from "@/pages/history";
+import LoginPage from "@/pages/login";
 import NotFound from "@/pages/not-found";
+import { AuthCtx, useAuthProvider } from "@/hooks/use-auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
+      retry: false,
     },
   },
 });
 
-function Router() {
+function AuthGate() {
+  const auth = useAuthProvider();
+
+  if (auth.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <span className="text-sm">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.user) {
+    return (
+      <LoginPage
+        onSuccess={() => {
+          queryClient.invalidateQueries();
+        }}
+      />
+    );
+  }
+
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/inventory" component={Inventory} />
-        <Route path="/history" component={History} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <AuthCtx.Provider value={auth}>
+      <Layout>
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/inventory" component={Inventory} />
+          <Route path="/history" component={History} />
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    </AuthCtx.Provider>
   );
 }
 
@@ -35,7 +63,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <AuthGate />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

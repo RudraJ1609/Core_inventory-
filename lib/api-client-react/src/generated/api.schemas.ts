@@ -9,6 +9,32 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface LoginBody {
+  username: string;
+  password: string;
+}
+
+export type AuthUserRole = (typeof AuthUserRole)[keyof typeof AuthUserRole];
+
+export const AuthUserRole = {
+  manager: "manager",
+  guest: "guest",
+} as const;
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  role: AuthUserRole;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface SuccessResult {
+  success: boolean;
+}
+
 export interface InventoryItem {
   id: number;
   name: string;
@@ -67,15 +93,9 @@ export interface DashboardStats {
 }
 
 export type ListItemsParams = {
-  /**
-   * Search filter for item name or category
-   */
   search?: string;
 };
 
 export type ListHistoryParams = {
-  /**
-   * Filter by item ID
-   */
   itemId?: number;
 };

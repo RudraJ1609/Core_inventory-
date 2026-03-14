@@ -8,7 +8,6 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -16,13 +15,40 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Login with username and password
+ */
+export const LoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["manager", "guest"]),
+});
+
+/**
+ * @summary Logout current session
+ */
+export const LogoutResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Get current authenticated user
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  role: zod.enum(["manager", "guest"]),
+});
+
+/**
  * @summary List all inventory items
  */
 export const ListItemsQueryParams = zod.object({
-  search: zod.coerce
-    .string()
-    .optional()
-    .describe("Search filter for item name or category"),
+  search: zod.coerce.string().optional(),
 });
 
 export const ListItemsResponseItem = zod.object({
@@ -37,7 +63,7 @@ export const ListItemsResponseItem = zod.object({
 export const ListItemsResponse = zod.array(ListItemsResponseItem);
 
 /**
- * @summary Create a new inventory item
+ * @summary Create a new inventory item (Manager only)
  */
 export const CreateItemBody = zod.object({
   name: zod.string(),
@@ -64,7 +90,7 @@ export const GetItemResponse = zod.object({
 });
 
 /**
- * @summary Update an inventory item
+ * @summary Update an inventory item (Manager only)
  */
 export const UpdateItemParams = zod.object({
   id: zod.coerce.number(),
@@ -88,7 +114,7 @@ export const UpdateItemResponse = zod.object({
 });
 
 /**
- * @summary Delete an inventory item
+ * @summary Delete an inventory item (Manager only)
  */
 export const DeleteItemParams = zod.object({
   id: zod.coerce.number(),
@@ -102,7 +128,7 @@ export const DeleteItemResponse = zod.object({
  * @summary List stock history events
  */
 export const ListHistoryQueryParams = zod.object({
-  itemId: zod.coerce.number().optional().describe("Filter by item ID"),
+  itemId: zod.coerce.number().optional(),
 });
 
 export const ListHistoryResponseItem = zod.object({

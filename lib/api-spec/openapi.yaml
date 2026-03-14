@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
   - name: items
     description: Inventory item operations
   - name: history
@@ -19,7 +21,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -27,6 +28,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current session
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResult"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /items:
     get:
@@ -39,7 +97,6 @@ paths:
           required: false
           schema:
             type: string
-          description: Search filter for item name or category
       responses:
         "200":
           description: List of inventory items
@@ -52,7 +109,7 @@ paths:
     post:
       operationId: createItem
       tags: [items]
-      summary: Create a new inventory item
+      summary: Create a new inventory item (Manager only)
       requestBody:
         required: true
         content:
@@ -90,7 +147,7 @@ paths:
     put:
       operationId: updateItem
       tags: [items]
-      summary: Update an inventory item
+      summary: Update an inventory item (Manager only)
       parameters:
         - name: id
           in: path
@@ -115,7 +172,7 @@ paths:
     delete:
       operationId: deleteItem
       tags: [items]
-      summary: Delete an inventory item
+      summary: Delete an inventory item (Manager only)
       parameters:
         - name: id
           in: path
@@ -143,7 +200,6 @@ paths:
           required: false
           schema:
             type: integer
-          description: Filter by item ID
       responses:
         "200":
           description: List of history events
@@ -174,8 +230,42 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+          enum: [manager, guest]
+      required: [id, username, role]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
 
     InventoryItem:
       type: object
@@ -196,14 +286,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required:
-        - id
-        - name
-        - quantity
-        - price
-        - category
-        - createdAt
-        - updatedAt
+      required: [id, name, quantity, price, category, createdAt, updatedAt]
 
     CreateItemBody:
       type: object
@@ -216,11 +299,7 @@ components:
           type: number
         category:
           type: string
-      required:
-        - name
-        - quantity
-        - price
-        - category
+      required: [name, quantity, price, category]
 
     UpdateItemBody:
       type: object
@@ -239,8 +318,7 @@ components:
       properties:
         success:
           type: boolean
-      required:
-        - success
+      required: [success]
 
     HistoryEvent:
       type: object
@@ -266,12 +344,7 @@ components:
         createdAt:
           type: string
           format: date-time
-      required:
-        - id
-        - itemId
-        - itemName
-        - action
-        - createdAt
+      required: [id, itemId, itemName, action, createdAt]
 
     DashboardStats:
       type: object
@@ -286,8 +359,4 @@ components:
             $ref: "#/components/schemas/InventoryItem"
         totalCategories:
           type: integer
-      required:
-        - totalItems
-        - totalStockValue
-        - lowStockItems
-        - totalCategories
+      required: [totalItems, totalStockValue, lowStockItems, totalCategories]

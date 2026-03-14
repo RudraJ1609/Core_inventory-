@@ -7,8 +7,5 @@
  */
 
 export type ListHistoryParams = {
-  /**
-   * Filter by item ID
-   */
   itemId?: number;
 };

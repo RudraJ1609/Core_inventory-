@@ -1,0 +1,13 @@
+packages:
+  "date-fns": "For human-readable date formatting in the history log"
+  "react-hook-form": "For robust form state management in item creation/editing"
+  "@hookform/resolvers": "For Zod schema validation integration with react-hook-form"
+
+images:
+  - path: "artifacts/inventory/public/images/logo-mark.png"
+    description: "A clean, modern, minimal abstract geometric logo mark for an inventory management system. Deep indigo blue color on a transparent background."
+    aspect_ratio: "1:1"
+
+notes:
+  - App relies on generated React Query hooks from @workspace/api-client-react
+  - wouter is used for client-side routing

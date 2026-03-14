@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Inventory Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: items
+    description: Inventory item operations
+  - name: history
+    description: Stock history operations
 paths:
   /healthz:
     get:
@@ -24,6 +27,146 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List all inventory items
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search filter for item name or category
+      responses:
+        "200":
+          description: List of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Create a new inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateItemBody"
+      responses:
+        "201":
+          description: Created item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get a single inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Item not found
+    put:
+      operationId: updateItem
+      tags: [items]
+      summary: Update an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateItemBody"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Item not found
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Item not found
+
+  /history:
+    get:
+      operationId: listHistory
+      tags: [history]
+      summary: List stock history events
+      parameters:
+        - name: itemId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by item ID
+      responses:
+        "200":
+          description: List of history events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryEvent"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [items]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +177,117 @@ components:
       required:
         - status
 
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        category:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - quantity
+        - price
+        - category
+        - createdAt
+        - updatedAt
+
+    CreateItemBody:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        category:
+          type: string
+      required:
+        - name
+        - quantity
+        - price
+        - category
+
+    UpdateItemBody:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        category:
+          type: string
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    HistoryEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        itemId:
+          type: integer
+        itemName:
+          type: string
+        action:
+          type: string
+          enum: [created, updated, deleted, stock_added, stock_removed]
+        quantityBefore:
+          type: integer
+          nullable: true
+        quantityAfter:
+          type: integer
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - itemId
+        - itemName
+        - action
+        - createdAt
+
+    DashboardStats:
+      type: object
+      properties:
+        totalItems:
+          type: integer
+        totalStockValue:
+          type: number
+        lowStockItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        totalCategories:
+          type: integer
+      required:
+        - totalItems
+        - totalStockValue
+        - lowStockItems
+        - totalCategories

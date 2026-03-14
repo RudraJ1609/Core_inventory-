@@ -19,5 +19,6 @@ export * from "./inventoryItem";
 export * from "./listHistoryParams";
 export * from "./listItemsParams";
 export * from "./loginBody";
+export * from "./signupBody";
 export * from "./successResult";
 export * from "./updateItemBody";

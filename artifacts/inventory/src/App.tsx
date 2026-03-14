@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { useState } from "react";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Inventory from "@/pages/inventory";
 import History from "@/pages/history";
 import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
 import NotFound from "@/pages/not-found";
 import { AuthCtx, useAuthProvider } from "@/hooks/use-auth";
 
@@ -20,8 +22,11 @@ const queryClient = new QueryClient({
   },
 });
 
+type AuthView = "login" | "signup";
+
 function AuthGate() {
   const auth = useAuthProvider();
+  const [authView, setAuthView] = useState<AuthView>("login");
 
   if (auth.isLoading) {
     return (
@@ -35,11 +40,18 @@ function AuthGate() {
   }
 
   if (!auth.user) {
+    if (authView === "signup") {
+      return (
+        <SignupPage
+          onSuccess={() => queryClient.invalidateQueries()}
+          onLoginClick={() => setAuthView("login")}
+        />
+      );
+    }
     return (
       <LoginPage
-        onSuccess={() => {
-          queryClient.invalidateQueries();
-        }}
+        onSuccess={() => queryClient.invalidateQueries()}
+        onSignupClick={() => setAuthView("signup")}
       />
     );
   }

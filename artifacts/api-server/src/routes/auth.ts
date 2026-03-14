@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { users } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import { LoginBody } from "@workspace/api-zod";
+import { LoginBody, SignupBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -22,6 +22,28 @@ async function seedDefaultUsers() {
 }
 
 seedDefaultUsers().catch(console.error);
+
+router.post("/auth/signup", async (req, res) => {
+  const body = SignupBody.parse(req.body);
+
+  const [existing] = await db.select().from(users).where(eq(users.username, body.username));
+  if (existing) {
+    res.status(409).json({ error: "Username already taken. Please choose another." });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(body.password, 12);
+  const [user] = await db
+    .insert(users)
+    .values({ username: body.username, passwordHash, role: "guest" })
+    .returning();
+
+  req.session.userId = user.id;
+  req.session.username = user.username;
+  req.session.role = user.role;
+
+  res.status(201).json({ id: user.id, username: user.username, role: user.role });
+});
 
 router.post("/auth/login", async (req, res) => {
   const body = LoginBody.parse(req.body);

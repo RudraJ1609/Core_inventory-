@@ -1,31 +1,34 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLogin } from "@workspace/api-client-react";
-import { Package2, Lock, User, Eye, EyeOff } from "lucide-react";
+import { useSignup } from "@workspace/api-client-react";
+import { Package2, Lock, User, Eye, EyeOff, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 
-interface LoginPageProps {
+interface SignupPageProps {
   onSuccess: () => void;
-  onSignupClick: () => void;
+  onLoginClick: () => void;
 }
 
-export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) {
+export default function SignupPage({ onSuccess, onLoginClick }: SignupPageProps) {
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
 
-  const loginMutation = useLogin({
+  const signupMutation = useSignup({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries();
         onSuccess();
       },
-      onError: () => {
-        setError("Invalid username or password. Please try again.");
+      onError: (err: any) => {
+        const message = err?.body?.error ?? err?.message ?? "Something went wrong. Please try again.";
+        setError(message);
       },
     },
   });
@@ -33,11 +36,25 @@ export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
+
+    if (!username.trim()) {
+      setError("Please enter a username.");
       return;
     }
-    loginMutation.mutate({ data: { username, password } });
+    if (username.trim().length < 3) {
+      setError("Username must be at least 3 characters.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    signupMutation.mutate({ data: { username: username.trim(), password } });
   };
 
   return (
@@ -54,24 +71,25 @@ export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) 
           </div>
         </div>
 
-        {/* Login Card */}
+        {/* Signup Card */}
         <Card className="p-6 shadow-lg border-border/50">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Sign in</h2>
-            <p className="text-sm text-muted-foreground mt-1">Enter your credentials to continue</p>
+            <h2 className="text-xl font-semibold text-foreground">Create account</h2>
+            <p className="text-sm text-muted-foreground mt-1">Sign up to get started</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="username">
+              <label className="text-sm font-medium text-foreground" htmlFor="signup-username">
                 Username
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="username"
+                  id="signup-username"
                   type="text"
-                  placeholder="Enter your username"
+                  placeholder="Choose a username"
                   className="pl-9 rounded-xl"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -81,20 +99,21 @@ export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) 
               </div>
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="password">
+              <label className="text-sm font-medium text-foreground" htmlFor="signup-password">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="password"
+                  id="signup-password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="At least 6 characters"
                   className="pl-9 pr-10 rounded-xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -107,6 +126,33 @@ export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) 
               </div>
             </div>
 
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor="signup-confirm">
+                Confirm password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="signup-confirm"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Repeat your password"
+                  className="pl-9 pr-10 rounded-xl"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  tabIndex={-1}
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2">
                 {error}
@@ -115,34 +161,34 @@ export default function LoginPage({ onSuccess, onSignupClick }: LoginPageProps) 
 
             <Button
               type="submit"
-              className="w-full rounded-xl"
-              disabled={loginMutation.isPending}
+              className="w-full rounded-xl gap-2"
+              disabled={signupMutation.isPending}
             >
-              {loginMutation.isPending ? "Signing in..." : "Sign in"}
+              <UserPlus className="w-4 h-4" />
+              {signupMutation.isPending ? "Creating account..." : "Create account"}
             </Button>
           </form>
 
-          {/* Link to signup */}
+          {/* Link to login */}
           <div className="mt-5 pt-5 border-t border-border/50 text-center">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <button
                 type="button"
-                onClick={onSignupClick}
+                onClick={onLoginClick}
                 className="font-medium text-primary hover:underline underline-offset-4 transition-colors"
               >
-                Sign up
+                Sign in
               </button>
             </p>
           </div>
         </Card>
 
-        {/* Hint */}
-        <div className="text-center text-xs text-muted-foreground space-y-1">
-          <p className="font-medium">Default accounts</p>
-          <p><span className="font-mono bg-muted px-1.5 py-0.5 rounded">manager</span> / manager123 — full access</p>
-          <p><span className="font-mono bg-muted px-1.5 py-0.5 rounded">guest</span> / guest123 — view only</p>
-        </div>
+        {/* Note about role */}
+        <p className="text-center text-xs text-muted-foreground">
+          New accounts are created with <span className="font-medium">Guest</span> (view-only) access.
+          <br />Contact a manager to get edit permissions.
+        </p>
       </div>
     </div>
   );

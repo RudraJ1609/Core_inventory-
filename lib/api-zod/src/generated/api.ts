@@ -15,6 +15,14 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Create a new account and auto-login
+ */
+export const SignupBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+/**
  * @summary Login with username and password
  */
 export const LoginBody = zod.object({
